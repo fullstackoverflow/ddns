@@ -8,13 +8,13 @@ const logger = new Logger("DDNS");
 
 class DDNS {
 
-    constructor(time: number = 10000) {
+    constructor() {
         setInterval(() => {
             logger.info("start sync...");
-            this.sync().then(()=>{
+            this.sync().then(() => {
                 logger.info("sync end");
             });
-        }, time);
+        }, Number(process.env.TIME) || 30 * 60 * 1000);
     }
 
     private async getip(): Promise<string> {
