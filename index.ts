@@ -1,6 +1,6 @@
 import { Logger } from '@tosee/log';
 import Axios from 'axios';
-import { setTimeout } from 'timers';
+import { setInterval, setTimeout } from 'timers';
 
 type Record = { id: string, name: string, content: string };
 
@@ -8,16 +8,18 @@ const logger = new Logger("DDNS");
 
 class DDNS {
 
-    constructor(time: number = 30 * 60 * 1000) {
-        setTimeout(() => {
+    constructor(time: number = 10000) {
+        setInterval(() => {
             logger.info("start sync...");
-            this.sync();
-            logger.info("sync end");
+            this.sync().then(()=>{
+                logger.info("sync end");
+            });
         }, time);
     }
 
     private async getip(): Promise<string> {
         const ip_response = await Axios.get<string>("https://api.ip.sb/ip");
+        logger.info("ip response:", ip_response.data);
         return ip_response.data.replaceAll(" ", "").replaceAll("\n", "").replaceAll("\r", "");
     }
 
@@ -80,4 +82,4 @@ class DDNS {
     }
 }
 
-new DDNS();
+new DDNS().sync();
