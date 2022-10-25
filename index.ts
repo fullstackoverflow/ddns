@@ -17,10 +17,28 @@ class DDNS {
         }, Number(process.env.TIME) || 30 * 60 * 1000);
     }
 
-    private async getip(): Promise<string> {
-        const ip_response = await Axios.get<string>("https://api.ip.sb/ip");
-        logger.info("ip response:", ip_response.data);
-        return ip_response.data.replaceAll(" ", "").replaceAll("\n", "").replaceAll("\r", "");
+    async getip(): Promise<string> {
+        const list: Promise<string>[] = [
+            new Promise(async (resolve, reject) => {
+                try {
+                    const ip_response = await Axios.get<string>("https://api.ip.sb/ip");
+                    return ip_response.data.replaceAll(" ", "").replaceAll("\n", "").replaceAll("\r", "");
+                } catch (e) {
+                    reject(e);
+                }
+            }),
+            new Promise(async (resolve, reject) => {
+                try {
+                    const ip_response = await Axios.get<string>("https://ifconfig.me");
+                    resolve(ip_response.data.replaceAll(" ", "").replaceAll("\n", "").replaceAll("\r", ""));
+                } catch (e) {
+                    reject(e);
+                }
+            })
+        ]
+        const ip = await Promise.any(list);
+        logger.info("ip response:", ip);
+        return ip;
     }
 
     private async update(zoneid: string, record: Record, ip: string) {
