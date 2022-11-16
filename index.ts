@@ -82,18 +82,22 @@ class DDNS {
     }
 
     async sync() {
+        const domain_list = (process.env.DOMAIN_LISTS || "").split(",").filter(Boolean);
+        logger.info("domain list:", domain_list);
         const zones = await this.getzones();
         logger.info("zone ids:", zones);
         await Promise.all(zones.map(async zoneid => {
             const records = await this.getrecords(zoneid);
             logger.info("records:", records);
             return await Promise.all(records.map(async record => {
-                const ip = await this.getip();
-                logger.info("ip now:", ip);
-                logger.info("ip record:", record.content);
-                if (record.content != ip) {
-                    logger.info("trigger Update")
-                    await this.update(zoneid, record, ip);
+                if (domain_list.includes(record.name)) {
+                    const ip = await this.getip();
+                    logger.info("ip now:", ip);
+                    logger.info("ip record:", record.content);
+                    if (record.content != ip) {
+                        logger.info("trigger Update")
+                        await this.update(zoneid, record, ip);
+                    }
                 }
             }));
         }));
